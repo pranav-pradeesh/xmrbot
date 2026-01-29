@@ -70,7 +70,7 @@ sudo apt install -y ./google-chrome-stable_current_amd64.deb
   ```
 - type your wallet address here
   ```bash
-  WALLET = "<WALLET_ADDRESS"
+  WALLET = "<WALLET_ADDRESS>"
   ```
 ### Run The Bot...
 
