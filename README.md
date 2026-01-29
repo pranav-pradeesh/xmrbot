@@ -1,6 +1,15 @@
 # XMRBOT
 ## 🚨🚨🚨 This Bot Works only for SupportXmr pool 🚨🚨🚨
-
+> **NOTE:** In the config.json inside the XMRIG file, change the HTTP rule as following
+```bash
+"http": {
+        "enabled": true,
+        "host": "127.0.0.1",
+        "port": 18000,
+        "access-token": null,
+        "restricted": true
+    }
+```
 ## How to run the bot
 to run the bot, follow the steps
 ### Enter the folder that have xmrig in your device and clone this repository
