@@ -11,17 +11,67 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 # =================== YOUR SETTINGS ===================
-BOT_TOKEN = "8504756732:AAHvy4cERas2GuF_NWnWnI355WJWBV218Jk"
-CHAT_ID = "-1003545232870"   # your Telegram GROUP chat ID
+BOT_TOKEN = "<YOUR_BOT_TOKEN>"
+CHAT_ID = "<YOUR_CHAT_ID>"   # your Telegram GROUP chat ID
 
 XMRIG_API = "http://127.0.0.1:18000/api.json"
 
 # YOUR MONERO WALLET (same as in XMRig)
-WALLET = "48222mqyXZWR65rFm8GNPyUH7m24oSdpbL52jCkJ3KraGvtL3Nu1Zk7JWqv67YPAbKW42SdqxpWAxHdKTxQ9krmiTYsNn5n"
+WALLET = "<WALLET_ADDRESS"
 # ====================================================
 
 bot = telebot.TeleBot(BOT_TOKEN)
 last_accepted = 0
+
+
+def get_xmr_to_inr_rate():
+    """Fetch current XMR to INR exchange rate with multiple fallbacks"""
+    
+    # Method 1: Try CoinGecko (most reliable for INR)
+    try:
+        url = "https://api.coingecko.com/api/v3/simple/price?ids=monero&vs_currencies=inr"
+        response = requests.get(url, timeout=10)
+        data = response.json()
+        
+        if "monero" in data and "inr" in data["monero"]:
+            print(f"✓ Got price from CoinGecko: ₹{data['monero']['inr']}")
+            return data["monero"]["inr"]
+    except Exception as e:
+        print(f"CoinGecko failed: {e}")
+    
+    # Method 2: Try Binance (XMR/USDT) × USD/INR conversion
+    try:
+        # Get XMR price in USDT
+        url_xmr = "https://api.binance.com/api/v3/ticker/price?symbol=XMRUSDT"
+        xmr_response = requests.get(url_xmr, timeout=10).json()
+        
+        if 'price' in xmr_response:
+            xmr_usdt = float(xmr_response['price'])
+            
+            # Use fixed USD to INR rate (~83-84) or get from another API
+            # You can also fetch live USD/INR rate from forex API
+            usd_inr = 83.5  # Approximate rate, update manually if needed
+            
+            xmr_inr = xmr_usdt * usd_inr
+            print(f"✓ Got price from Binance: ₹{xmr_inr}")
+            return xmr_inr
+    except Exception as e:
+        print(f"Binance failed: {e}")
+    
+    # Method 3: Try CryptoCompare
+    try:
+        url = "https://min-api.cryptocompare.com/data/price?fsym=XMR&tsyms=INR"
+        response = requests.get(url, timeout=10)
+        data = response.json()
+        
+        if "INR" in data:
+            print(f"✓ Got price from CryptoCompare: ₹{data['INR']}")
+            return data['INR']
+    except Exception as e:
+        print(f"CryptoCompare failed: {e}")
+    
+    print("❌ All price APIs failed")
+    return None
 
 
 def get_pending_and_paid_xmr():
@@ -89,6 +139,9 @@ while True:
 
         # ---- SupportXMR stats ----
         pending_xmr, paid_xmr = get_pending_and_paid_xmr()
+        
+        # ---- Get XMR to INR exchange rate ----
+        xmr_inr_rate = get_xmr_to_inr_rate()
 
         # Notify only when a new share is accepted
         if accepted > last_accepted:
@@ -97,6 +150,18 @@ while True:
                 f"⚡ Hashrate: {hashrate:.2f} H/s\n"
                 f"📊 Accepted shares: {accepted}\n"
                 f"💰 Pending: {pending_xmr} XMR\n"
+            )
+            
+            # Add INR conversion line if valid
+            if xmr_inr_rate and pending_xmr not in ["not found", "error"]:
+                try:
+                    pending_float = float(pending_xmr)
+                    pending_inr = pending_float * xmr_inr_rate
+                    msg += f"💵 Pending INR: ₹{pending_inr:,.2f}\n"
+                except ValueError:
+                    pass
+            
+            msg += (
                 f"💸 Paid: {paid_xmr} XMR\n"
                 f"🔗 Check supportxmr.com for details"
             )
