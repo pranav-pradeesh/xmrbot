@@ -1,3 +1,5 @@
+![XMR BOT](https://raw.githubusercontent.com/pranav-pradeesh/xmrbot/main/banner.png)
+
 # XMRBOT
 ## 🚨🚨🚨 This Bot Works only for SupportXmr pool 🚨🚨🚨
 > **NOTE:** In the config.json inside the XMRIG file, change the HTTP rule as following
